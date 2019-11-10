@@ -112,7 +112,7 @@ Nsub<-length(Y)
 age.g<-Tuscany1$agep
 age1<-unique(age.g)
 Nage<-length(age1)
-K<-4
+K<-4 # we can change the number of components by selecting a different value of K
 e0<-rep(1,K)
 #mean.y<-mean(Y)
 #var.y<-var(Y)
@@ -336,3 +336,18 @@ print(DataMix,digits=3)
 DataRes<-data.frame(age1,prop.mix,n.mix=as.numeric(n.mix),
                     prev,lb.prev,ub.prev)
 #write.csv(DataRes,file="results/DataPrevFOI_prob_m4_tu05.csv",row.names = F)
+
+##### Comparison between models #####
+#load("mev_nonparam_n_2comp_dv_res.RData")
+#dev2<-mv.nonparam.n.2comp.dv$BUGSoutput$sims.array[,,"deviance"]
+#load("results/mv_nonparam_n_3comp_dv.RData")
+#dev3<-mv.nonparam.n.3comp.dv$BUGSoutput$sims.array[,,"deviance"]
+load("mev_nonparam_n_4comp_dv_res.RData")
+dev4<-mv.nonparam.n.4comp.dv$BUGSoutput$sims.array[,,"deviance"]
+#load("results/mv_nonparam_n_5comp_dv.RData")
+#dev5<-mv.nonparam.n.5comp.dv$BUGSoutput$sims.array[,,"deviance"]
+
+#summaryDiff(dev3,dev2) # M3 fits better than M2
+#summaryDiff(dev4,dev3) # M4 fits better than M3
+#summaryDiff(dev5,dev4) # no evidence for choosing between M4 and M5
+# We choose as best model M4
