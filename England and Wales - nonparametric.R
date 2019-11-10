@@ -12,10 +12,10 @@ library(snow)
 library(dclone)
 library(survey)
 library(gplots)
-source("codes/Functions for prevalence and FOI.R")
+source("Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-EnglandWales<-read.table("data/UK_polymod.txt",header=T,sep="\t",
+EnglandWales<-read.table("serodata_vzv_b19_ew.txt",header=T,sep="\t",
                     na.strings = c("",NA))
 EnglandWales<-EnglandWales[is.na(EnglandWales$vzvmiuml)==F,]
 head(EnglandWales) # N=2091 # Those with no missing values for VZV antibodies
@@ -91,13 +91,13 @@ vzv.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 vzv.prodbeta.sn.orig.new<-jags(vzv.data,vzv.inits,vzv.params,n.chains=3,
-                  model.file="codes/prodbeta_sn_final.txt",n.iter=20000,n.thin = 10)
+                  model.file="prodbeta_sn_model.txt",n.iter=20000,n.thin = 10)
 #vzv.prodbeta.sn.orig.new.up<-update(vzv.prodbeta.sn.orig.new,n.iter=10000)
 #stopCluster(cl)
 date()
 print(vzv.prodbeta.sn.orig.new,digits=2)
-save(vzv.prodbeta.sn.orig.new,file="results/vzv_nonparam_sn_new.RData")
-load("results/vzv_nonparam_sn_new.RData")
+save(vzv.prodbeta.sn.orig.new,file="vzv_prodbeta_sn_res.RData")
+load("vzv_prodbeta_sn_res.RData")
 recompile(vzv.prodbeta.sn.orig.new)
 dic.samples(vzv.prodbeta.sn.orig.new$model,type="popt",n.iter=1000) 
 # PED = 9,048
@@ -209,7 +209,7 @@ x<-seq(min(EnglandWales1$Y,na.rm=T),max(EnglandWales1$Y,na.rm=T),length.out = 10
 mix.sn<-(1-mean(prev))*dsn(x,mu[1],sigma[1],alpha[1])+
   mean(prev)*dsn(x,mu[2],sigma[2],alpha[2])
   
-svg("figs/Fig2c.svg",width=5.,height=5.)
+#svg("figs/Fig2c.svg",width=5.,height=5.)
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(5,5.5,3,2),las=1)
 hist(EnglandWales1$Y,breaks=100,xlab=expression("VZV ("*log[10]*"[OD+1])"),
      freq=F,main="England and Wales",ylim=c(0,1.5))
@@ -218,7 +218,7 @@ abline(v=log10(24+1),lty=2,lwd=2)
 lines(x,(1-mean(prev))*dsn(x,mu[1],sigma[1],alpha[1]),col=1,lty=3,lwd=2)
 lines(x,mean(prev)*dsn(x,mu[2],sigma[2],alpha[2]),col=1,lty=3,lwd=2)
 lines(x,mix.sn,col=1,lwd=3)
-dev.off()
+#dev.off()
 
 #Create a table with n° trials and n° successes
 prop.table(table(Z)) # POS=72.6% (CI: 66.3% - 80.7%)
@@ -265,7 +265,7 @@ age_point<-1:11
 
 agelabel<-c("1y","2y","3y","4y","5y","6y","7y","8y","9y","10-14y","15-20y")
 
-svg("figs/EnglandWales/Fig2_ew-new.svg",width=8.,height=5.)
+#svg("figs/EnglandWales/Fig2_ew-new.svg",width=8.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(6,6,0,1),cex.lab=1.5,cex.axis=1.5)
 fig1.bar<-barplot(F.cut.uw,col="gray",ylim=c(0,1.1),
                   names.arg="",las=3,axes=F,
@@ -277,10 +277,10 @@ lines(fig1.bar,F.mix)
 points(fig1.bar,F.mix,pch=19)
 polygon(c(fig1.bar,rev(fig1.bar)),c(F.mix.ub,rev(F.mix.lb)),
         col=rgb(0, 0, 0, 0.5), border=NA)
-dev.off()
+#dev.off()
 
 agelabel1<-seq(0,20,5)
-svg("figs/EnglandWales/Fig3_ew-new.svg",width=5.,height=5.)
+#svg("figs/EnglandWales/Fig3_ew-new.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
@@ -295,9 +295,9 @@ polygon(c(age1,rev(age1)),c(ub.prev,rev(lb.prev)),
 points(age1,prop.mix,cex=0.01*n.mix)
 axis(side=1,at=seq(0,20,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),seq(0,100,10),las=2)  
-dev.off()
+#dev.off()
 
-svg("figs/EnglandWales/Fig4_ew-new.svg",width=5.,height=5.)
+#svg("figs/EnglandWales/Fig4_ew-new.svg",width=5.,height=5.)
 # Plot force of infection
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
 plot(age1[-(Nage-1):-Nage],foi[-(Nage-1):-Nage],main="",lwd=3,
@@ -311,7 +311,7 @@ polygon(c(age1,rev(age1)),c(ub.foi,rev(lb.foi)),
         col=rgb(0, 0, 0, 0.5), border=NA)
 axis(side=1,at=seq(0,20,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),las=2)  
-dev.off()
+#dev.off()
 
 ##### Saving results for further analyses #####
 
@@ -323,10 +323,10 @@ DataMix<-data.frame(status=c("susceptible","immune"),
                     f=c(f,NA),lb.f=c(ub.f,NA),ub.f=c(lb.f,NA),
                     country=rep("ew",2))
 print(DataMix,digits=2)
-write.csv(DataMix,file="results/DataMixtureParams_pb_vzv_ew.csv",row.names = F)
-read.csv("results/DataMixtureParams_pb_vzv_ew.csv")
+#write.csv(DataMix,file="DataMixtureParams_pb_vzv_ew.csv",row.names = F)
+#read.csv("DataMixtureParams_pb_vzv_ew.csv")
 
 ### Seroprevalence and FOI
 DataRes<-data.frame(age1,prop.mix,n.mix=as.numeric(n.mix),
                     prev,lb.prev,ub.prev,foi,lb.foi,ub.foi)
-write.csv(DataRes,file="results/DataPrevFOI_nonparam_vzv.csv",row.names = F)
+#write.csv(DataRes,file="DataPrevFOI_nonparam_vzv.csv",row.names = F)
