@@ -12,10 +12,10 @@ library(snow)
 library(dclone)
 library(survey)
 library(gplots)
-source("codes/Functions for prevalence and FOI.R")
+source("Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-Tuscany<-read.csv("data/data_tuscany_mv_0506.csv",header=T,dec=".",sep=";")
+Tuscany<-read.csv("serodata_mev_it_0506.csv",header=T,dec=".",sep=";")
 Tuscany<-Tuscany[Tuscany$od>0.001,]
 head(Tuscany) # N=927
 summary(Tuscany$age)
@@ -68,12 +68,12 @@ mea05.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 mv.const.n.4comp.dv<-jags(mea05.data,mea05.inits,mea05.params,n.chains=2,
-                           model.file="codes/mv_const_n_dv.txt",n.iter=30000,n.thin = 10)
+                           model.file="mev_const_n_dv.txt",n.iter=30000,n.thin = 10)
 print(mv.const.n.4comp.dv,digits=2)
 #mv.nonparam.sn.4comp.cv.up<-update(mv.nonparam.sn.4comp.cv,n.iter=30000)
 #stopCluster(cl)
 date()
-save(mv.const.n.4comp.dv,file="results/mv_const_n_4comp_dv.RData")
+save(mv.const.n.4comp.dv,file="mev_const_n_4comp_dv.RData")
 
 fit<-mv.const.n.4comp.dv
 traceplot(fit,varname="xi")
@@ -91,7 +91,7 @@ mix.n<-p[1]*dnorm(x,mu[1],sigma[1])+
   p[3]*dnorm(x,mu[3],sigma[3])+
   p[4]*dnorm(x,mu[4],sigma[4])
 
-svg("figs/Histmix_4comp_mev.svg",width=5.,height=5.)
+#svg("figs/Histmix_4comp_mev.svg",width=5.,height=5.)
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(5,5.5,3,2),las=1)
 hist(Tuscany1$Y,breaks=100,xlab=expression("MeV ("*log[10]*"[OD+1])"),
      freq=F,main="Tuscany (Italy)",ylim=c(0,1))
@@ -102,7 +102,7 @@ lines(x,p[2]*dnorm(x,mu[2],sigma[2]),col=1,lty=3,lwd=2)
 lines(x,p[3]*dnorm(x,mu[3],sigma[3]),col=1,lty=3,lwd=2)
 lines(x,p[4]*dnorm(x,mu[4],sigma[4]),col=1,lty=3,lwd=2)
 lines(x,mix.n,col=1,lwd=3)
-dev.off()
+#dev.off()
 
 ##### NONPARAMETRIC MODEL #####
 
@@ -140,13 +140,13 @@ mea05.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 mv.nonparam.n.4comp.dv<-jags(mea05.data,mea05.inits,mea05.params,n.chains=2,
-                  model.file="codes/mv_nonparam_n_dv.txt",n.iter=30000,n.thin = 10)
+                  model.file="mev_nonparam_n_dv.txt",n.iter=30000,n.thin = 10)
 #mv.nonparam.n.3comp.dv.up<-update(mv.nonparam.n.3comp.dv,n.iter=10000)
 #stopCluster(cl)
 date()
 print(mv.nonparam.n.4comp.dv,digits=2)
-save(mv.nonparam.n.4comp.dv,file="results/mv_nonparam_n_4comp_dv.RData")
-load("results/mv_nonparam_n_4comp_dv.RData")
+save(mv.nonparam.n.4comp.dv,file="mev_nonparam_n_4comp_dv_res.RData")
+load("mev_nonparam_n_4comp_dv_res.RData")
 recompile(mv.nonparam.n.4comp.dv)
 dic.samples(mv.nonparam.n.4comp.dv$model,type="popt",n.iter=1000) 
 # Inversa gamma for variance, PED=8552 (Mean dev = 272.9)
@@ -292,7 +292,7 @@ age_point<-1:17
 agelabel<-c("1y","2y","3y","4y","5y","6y","7y","8y","9y","10-14y","15-19y","20-24y",
             "25-29y","30-34y","35-39y","40-44y","45-49y")
 
-svg("figs/Fig2_tu05-3comp_dv.svg",width=8.,height=5.)
+#svg("figs/Fig2_tu05-3comp_dv.svg",width=8.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(6,6,0,1),cex.lab=1.5,cex.axis=1.5)
 fig1.bar<-barplot(F.cut.uw,col="gray",ylim=c(0,1.1),
                   names.arg="",las=3,axes=F,
@@ -304,10 +304,10 @@ lines(fig1.bar,F.mix)
 points(fig1.bar,F.mix,pch=19)
 polygon(c(fig1.bar,rev(fig1.bar)),c(F.mix.ub,rev(F.mix.lb)),
         col=rgb(0, 0, 0, 0.5), border=NA)
-dev.off()
+#dev.off()
 
 agelabel1<-seq(0,50,5)
-svg("figs/prev_nonparam_m4.svg",width=5.,height=5.)
+#svg("figs/prev_nonparam_m4.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(5,5.5,3,2))
@@ -322,7 +322,7 @@ polygon(c(age1,rev(age1)),c(ub.prev,rev(lb.prev)),
 points(age1,prop.mix,cex=0.075*n.mix)
 axis(side=1,at=seq(0,50,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1,0.1),seq(0,100,10),las=2)  
-dev.off()
+#dev.off()
 
 ### Mixture parameters
 DataMix<-data.frame(status=c("c1","c2","c3","c4"),
@@ -330,9 +330,9 @@ DataMix<-data.frame(status=c("c1","c2","c3","c4"),
                     sigma,lb.sigma,ub.sigma,
                     country=rep("tuscany05",4))
 print(DataMix,digits=3)
-write.csv(DataMix,file="results/DataMixtureParams_prob_m4_tu05.csv",row.names = F)
+#write.csv(DataMix,file="results/DataMixtureParams_prob_m4_tu05.csv",row.names = F)
 
 ### Seroprevalence and FOI
 DataRes<-data.frame(age1,prop.mix,n.mix=as.numeric(n.mix),
                     prev,lb.prev,ub.prev)
-write.csv(DataRes,file="results/DataPrevFOI_prob_m4_tu05.csv",row.names = F)
+#write.csv(DataRes,file="results/DataPrevFOI_prob_m4_tu05.csv",row.names = F)
