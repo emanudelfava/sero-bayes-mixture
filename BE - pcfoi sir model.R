@@ -9,10 +9,10 @@ library(snow)
 library(dclone)
 library(survey)
 library(gplots)
-source("codes/Functions for prevalence and FOI.R")
+source("Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-Dat<-read.csv("data/serodata_vzv_b19_be.csv",header=T,sep=",",na.strings = "")
+Dat<-read.csv("serodata_vzv_b19_be.csv",header=T,sep=",",na.strings = "")
 Belgium<-Dat[is.na(Dat$parvouml)==F,c(1,2,3,4,5,8,9)]
 head(Belgium) # N=3098 # Those with no missing values for b19 antibodies
 range(Belgium$age)
@@ -92,13 +92,13 @@ b19.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 b19.pcfoi.sn.orig.new<-jags(b19.data,b19.inits,b19.params,n.chains=2,
-                            model.file="codes/pcfoi_sir_sn_alter.txt",n.iter=30000,n.thin = 10)
+                            model.file="pcfoi_sir_sn_model.txt",n.iter=30000,n.thin = 10)
 #b19.pcfoi.sn.orig.new.up<-update(b19.pcfoi.sn.orig.new,n.iter=10000,n.thin = 10)
 #stopCluster(cl)
 date()
 print(b19.pcfoi.sn.orig.new,digits=2)
-save(b19.pcfoi.sn.orig.new,file="results/b19_pcfoi_sir_sn_new.RData")
-load("results/b19_pcfoi_sir_sn_new.RData")
+save(b19.pcfoi.sn.orig.new,file="b19_pcfoi_sir_sn_res.RData")
+load("b19_pcfoi_sir_sn_res.RData")
 recompile(b19.pcfoi.sn.orig.new)
 dic.samples(b19.pcfoi.sn.orig.new$model,type="popt",n.iter=1000) 
 # PED = 11,732
@@ -259,7 +259,7 @@ age_point<-1:19
 agelabel<-c("1y","2y","3y","4y","5y","6y","7y","8y","9y","10-14y","15-19y","20-24y",
             "25-29y","30-34y","35-39y","40-44y","45-49y","50-59y","60-69y")
 
-svg("figs/Belgium/Fig2_be-poly-farr.svg",width=8.,height=5.)
+#svg("figs/Belgium/Fig2_be-poly-farr.svg",width=8.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(6,6,0,1),cex.lab=1.5,cex.axis=1.5)
 fig1.bar<-barplot(F.cut.uw,col="gray",ylim=c(0,1.1),
                   names.arg="",las=3,axes=F,
@@ -271,10 +271,10 @@ lines(fig1.bar,F.mix)
 points(fig1.bar,F.mix,pch=19)
 polygon(c(fig1.bar,rev(fig1.bar)),c(F.mix.ub,rev(F.mix.lb)),
         col=rgb(0, 0, 0, 0.5), border=NA)
-dev.off()
+#dev.off()
 
 agelabel1<-c(paste(seq(0,55,5),"y",sep=""),">60y")
-svg("figs/Belgium/Fig3_be-poly-farr.svg",width=5.,height=5.)
+#svg("figs/Belgium/Fig3_be-poly-farr.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
@@ -289,9 +289,9 @@ polygon(c(age1,rev(age1)),c(ub.prev,rev(lb.prev)),
 points(age1,prop.mix,cex=0.01*n.mix)
 axis(side=1,at=seq(0,60,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1,0.1),seq(0,100,10),las=2)  
-dev.off()
+#dev.off()
 
-svg("figs/Belgium/Fig4_be-poly-farr.svg",width=5.,height=5.)
+#svg("figs/Belgium/Fig4_be-poly-farr.svg",width=5.,height=5.)
 # Plot force of infection
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
 plot(age1[-(Nage-1):-Nage],foi[-(Nage-1):-Nage],main="",lwd=3,
@@ -305,24 +305,24 @@ polygon(c(age1,rev(age1)),c(ub.foi,rev(lb.foi)),
         col=rgb(0, 0, 0, 0.5), border=NA)
 axis(side=1,at=seq(0,60,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),las=2)  
-dev.off()
+#dev.off()
 
 ##### Comparison between models #####
-load("results/b19_nonparam_sn_new.RData")
+load("b19_prodbeta_sn_res.RData")
 dev.np<-b19.prodbeta.sn.orig.new$BUGSoutput$sims.array[,,"deviance"]
-load("results/b19_pcfoi_sir_sn_new.RData")
+load("b19_pcfoi_sir_sn_res.RData")
 dev.pc<-b19.pcfoi.sn.orig.new$BUGSoutput$sims.array[,,"deviance"]
 
 summaryDiff(dev.np,dev.pc) # the two models fit similarly
 
-svg("figs/diffdev_b19.svg",width=5.,height=5.)
+#svg("figs/diffdev_b19.svg",width=5.,height=5.)
 par(mgp=c(4.5,1,0), mar=c(5.75,5.75,1.5,1.5),cex.lab=1.5,cex.axis=1.5,las=2)
 plot(ecdf(dev.np),lwd=3,xlab="Posterior deviance",main="",axes=F,xlim=c(-9000,-6000))
 lines(ecdf(dev.pc),lty=2,col=2,lwd=3)
 legend("right",c("PB","SIR"),lwd=3,col=1:2,lty=1:2,bty="n",cex=1.5)
 axis(side=1,at=seq(-9000,-6000,500))
 axis(side=2,at=seq(0,1.,0.1)) 
-dev.off()
+#dev.off()
 
 ##### Saving results for further analyses #####
 
@@ -333,13 +333,13 @@ DataMix<-data.frame(status=c("susceptible","immune"),
                     alpha,lb.alpha,ub.alpha,
                     f=c(f,NA),lb.f=c(ub.f,NA),ub.f=c(lb.f,NA),
                     country=rep("be",2))
-write.csv(DataMix,file="results/DataMixtureParams_sir_b19_be.csv",row.names = F)
+#write.csv(DataMix,file="DataMixtureParams_sir_b19_be.csv",row.names = F)
 print(DataMix,digits=2)
 #DataMix<-read.csv("tmp/DataMixtureParams_pb_b19_be.csv",header = T)
 
 n.mix<-as.numeric(n.mix)
 PC<-data.frame(age1,prop.mix,n.mix,prev,lb.prev,ub.prev,foi,lb.foi,ub.foi)
-write.csv(PC,file="results/DataPrevFOI_sir_b19_be.csv",row.names=F)
+write.csv(PC,file="DataPrevFOI_sir_b19_be.csv",row.names=F)
 
 ##### Plotting non-parametric and PC-FOI models together #####
 
@@ -348,7 +348,7 @@ BP<-read.csv("results/DataPrevFOI_pb_b19_be.csv",header=T)
 PC<-read.csv("results/DataPrevFOI_sir_b19_be.csv",header=T)
 
 agelabel1<-c(seq(0,55,5),">60")
-svg("figs/Fig2b.svg",width=5.,height=5.)
+#svg("figs/Fig2b.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(5,5.,3,5.))
@@ -392,4 +392,4 @@ axis(side=2,at=seq(0,1,0.1),seq(0,100,10),las=2)
 axis(side=4,at=seq(0,1,0.1),las=2)
 mtext(text="FOI",side=4,cex=1.5,line=3.5,las=3)
 legend("right",lty=1:2,col=1:2,lwd=3,c("PB","SIR"),bty="n",cex = 1.5)
-dev.off()
+#dev.off()
