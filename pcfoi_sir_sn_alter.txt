@@ -1,0 +1,104 @@
+model{
+	for(i in 1:Nsub) {
+		logod[i] ~ dnorm(m[i],t[i])
+		#S[i] ~ dcat(p[age.g[i]-lag,])
+		#T[i] <- S[i]-1
+		T[i] ~ dbern(p[age.g[i]-lag])
+		S[i] <- T[i]+1
+		m[i]<-(xi[1]*(1-T[i])+xi[2]*T[i])+psi[S[i]]*z[i]
+		t[i]<-tau[S[i]]
+		z[i] ~ dnorm(0,1)T(0,)
+		y.rep[i] ~ dnorm(m[i],t[i])
+
+# Discrepancy measures between observed and replicated data		
+	  r[i]<-logod[i]-m[i] 
+	  sr[i]<-r[i]/sqrt(t[i]) 
+	  r.rep[i]<-y.rep[i]-m[i]
+	  sr.rep[i]<-r.rep[i]/sqrt(t[i])
+	  m2[i]<-pow(sr[i],2) 
+	  m2.rep[i]<-pow(sr.rep[i],2)
+	}
+
+# Estimating mixture parameters
+	for(j in 1:2){
+		#xi0[j] ~ dunif(0,10)
+		xi0[j] ~ dnorm(eta[j],zeta[j])T(0,)
+		psi[j] ~ dnorm(0,0.01)
+    #sigma[j] ~ dt(0,0.01,1)T(0,) # half-cauchy with large scale on std. dev.
+    #sigma[j] ~ dunif(0,100)      # uniform with large range on std. dev
+    #tau[j]<-1/pow(sigma[j],2)
+    tau[j] ~ dgamma(0.01,0.01)    # gamma with large range on precision
+    sigma[j]<-1/sqrt(tau[j])
+		eta[j] ~ dnorm(0,0.001)		
+		zeta[j] ~ dgamma(0.001,0.001)
+	}
+	
+	xi[1:2]<-sort(xi0)
+	for(k in 1:2){
+		gamma[k]<-psi[k]/sigma[k]
+		omega[k]<-sqrt(pow(sigma[k],2)+pow(psi[k],2))
+	}
+
+# Expected predictive deviance (EPD, Dagne 2013) or mean squared error for in-sample predictions
+	epd<-sum(r2[])/(Nsub)
+  
+##### Estimation of FOI and prevalence #####
+
+### FOI in the first age group, divided between [0,epsilon) and [epsilon,5) 
+Births <- 100000
+lambda0[1] ~ dnorm(0,0.001)T(0,)
+X_age_aj[1] <- Births*nu # no. susceptible at exact age 0
+X_age_eps <- X_age_aj[1]*exp(-lambda0[1]*eps) + (Births-X_age_aj[1]) # no. susceptible at exact age epsilon (end of maternal antibody protection)	
+X_age_aj[2] <-X_age_eps*exp(-lambda0[1]*(a[2]-eps)) # no. susceptible at exact age 5
+X[1] <- (X_age_aj[1]/lambda0[1])*(1-exp(-lambda0[1]*eps)) + (Births-X_age_aj[1])*eps + (X_age_eps/lambda0[1])*(1-exp(-lambda0[1]*(a[2]-eps))) # no. susceptible in the first age group
+x[1] <- X[1]/(Births*h1[1])  # prop. susceptible in the first age group 
+Y[1] <- D*lambda0[1]*X[1] # no. infective in the first age group
+y[1] <- Y[1]/(Births*h1[1])  # prop. infective in the first age group
+
+for(j in 2:J){
+    lambda0[j] ~ dnorm(0,0.001)T(0,) 
+    X_age_aj[j+1] <- exp(-lambda0[j]*h1[j])*X_age_aj[j] # no. susceptible at upper bound age group j
+    X[j] <- (X_age_aj[j]-X_age_aj[j+1])/lambda0[j] # no. susceptible in the jth age group
+    Y[j] <- D*lambda0[j]*X[j]	# no. infective in the jth age group
+    y[j] <- Y[j]/(Births*h1[j])	# prop. infective in the jth age group
+  }
+  
+  for(j in 1:J){
+    lambda[j]<-lambda0[j]
+    for(t in (a[j]-lag):((a[j+1]-lag)-1)){
+      foi[t]<-lambda[j]
+    } 
+  }
+  
+### Prevalance by one-year age groups ###
+
+  # Prevalence in the first (1-year) age group 
+  S_age_aj[1] <- Births*nu
+  S_age_eps <- S_age_aj[1]*exp(-foi[1]*eps) + (Births-S_age_aj[1]) 
+  S_age_aj[2] <-S_age_eps*exp(-foi[1]*(1-eps))
+  Sus[1]<-(S_age_aj[1]/foi[1])*(1-exp(-foi[1]*eps)) + (Births-S_age_aj[1])*eps + (S_age_eps/foi[1])*(1-exp(-foi[1]*(1-eps)))
+  sus[1]<-Sus[1]/(Births*h2[1])
+  prev[1]<-1-sus[1]
+
+  # Prevalence in all other available 1-year 
+  for(j in 2:length(h2)){
+    S_age_aj[j+1] <- exp(-foi[j]*h2[j])*S_age_aj[j]
+    Sus[j] <- (S_age_aj[j]-S_age_aj[j+1])/foi[j]
+    sus[j]<-Sus[j]/(Births*h2[j])
+    prev[j]<-1-sus[j]
+  }
+  
+	for(j in 1:length(h2)){
+	  #p[j,1]<-sus[j]
+    p[j]<-prev[j]
+  }
+  	
+# Remaining fraction of susceptible
+  f <- 1-p[Nage]
+
+# Posterior predictive p-value
+	Tstat<-mean(m2[])
+	Tstat.rep<-mean(m2.rep[])
+	ppp<-step(Tstat.rep-Tstat)
+}
+
