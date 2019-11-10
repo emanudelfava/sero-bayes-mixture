@@ -1,0 +1,57 @@
+model{
+	for(i in 1:Nsub) {
+		Y[i] ~ dnorm(m[i],t[i])
+		S[i] ~ dcat(p[age.g[i],])
+		m[i]<- xi[S[i]]
+		t[i]<- tau[S[i]]
+		y.rep[i] ~ dnorm(m[i],t[i])
+		#r2[i]<- pow(y.rep[i]-Y[i],2)
+		Z[i]<- ifelse(S[i]>=2,1,0)
+
+# Discrepancy measures between observed and replicated data		
+	  r[i]<-Y[i]-m[i] 
+	  sr[i]<-r[i]/sqrt(t[i]) 
+	  r.rep[i]<-y.rep[i]-m[i]
+	  sr.rep[i]<-r.rep[i]/sqrt(t[i])
+	  m2[i]<-pow(sr[i],2) 
+	  m2.rep[i]<-pow(sr.rep[i],2)
+	}
+
+# Estimating mixture parameters
+	for(j in 1:K){
+		#xi0[j] ~ dunif(0,10)
+		xi0[j] ~ dnorm(eta[j],zeta[j])T(0,)
+		psi[j] ~ dnorm(0,0.01)
+    #sigma[j] ~ dt(0,0.01,1)T(0,) # half-cauchy with large scale on std. dev.
+    #sigma[j] ~ dunif(0,100)      # uniform with large on std. dev.
+    #tau[j]<-1/pow(sigma[j],2)
+    tau[j] ~ dgamma(0.01,0.01)    # gamma with large range on precision
+    sigma[j]<-1/sqrt(tau[j])
+		eta[j] ~ dnorm(0,0.001)		
+		zeta[j] ~ dgamma(0.001,0.001)
+	}
+	xi[1:K]<-sort(xi0)
+
+# Mean squared error for in-sample predictions
+#	mse.y<-sum(r2[])/(Nsub)
+  
+# Seroprevalence
+  for(j in 1:Nage){
+    p[j,1:K] ~ ddirch(e0[])
+    prev[j]<-sum(p[j,2:K])
+  }
+  
+  # Smoothing of prevalence
+  prevs[1] <- (3*prev[1]+2*prev[2]+prev[3])/6
+	prevs[2] <- (prev[1]+3*prev[2]+prev[3])/5
+  for(h in 3:(Nage-2)){
+    prevs[h] <- (prev[h-2]+2*prev[h-1]+3*prev[h]+2*prev[h+1]+prev[h+2])/9
+	}
+	prevs[Nage-1] <- (prev[Nage-2]+3*prev[Nage-1]+prev[Nage])/5
+	prevs[Nage] <- (prev[Nage-2]+2*prev[Nage-1]+3*prev[Nage])/6
+
+# Posterior predictive p-value
+	Tstat<-mean(m2[])
+	Tstat.rep<-mean(m2.rep[])
+	ppp<-step(Tstat.rep-Tstat)
+}
