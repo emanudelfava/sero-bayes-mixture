@@ -13,10 +13,10 @@ library(dclone)
 library(survey)
 library(gplots)
 library(matrixStats)
-source("codes/Functions for prevalence and FOI.R")
+source("Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-Dat<-read.csv("data/serodata_vzv_b19_be.csv",header=T,sep=",",na.strings = "")
+Dat<-read.csv("serodata_vzv_b19_be.csv",header=T,sep=",",na.strings = "")
 Belgium<-Dat[is.na(Dat$parvouml)==F,c(1,2,3,4,5,8,9)]
 head(Belgium) # N=3098 # Those with no missing values for b19 antibodies
 range(Belgium$age)
@@ -101,14 +101,14 @@ b19.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 b19.prodbeta.sn.orig.new<-jags(b19.data,b19.inits,b19.params,n.chains=2,
-                  model.file="codes/prodbeta_sn_alter.txt",n.iter=30000,n.thin=10)
+                  model.file="prodbeta_sn_model.txt",n.iter=30000,n.thin=10)
 #b19.prodbeta.sn.orig.new.up<-update(b19.prodbeta.sn.orig.new,n.iter=5000)
 #b19.prodbeta.sn.orig.new.up2<-update(b19.prodbeta.sn.orig.new.up,n.iter=5000)
 #stopCluster(cl)
 date()
 print(b19.prodbeta.sn.orig.new,digits=2)
-save(b19.prodbeta.sn.orig.new,file="results/b19_nonparam_sn_new.RData")
-load("results/b19_nonparam_sn_new.RData")
+save(b19.prodbeta.sn.orig.new,file="b19_prodbeta_sn_res.RData")
+load("b19_prodbeta_sn_res.RData")
 recompile(b19.prodbeta.sn.orig.new)
 dic.samples(b19.prodbeta.sn.orig.new$model,type="popt",n.iter=1000) 
 # PED = 12,222
@@ -261,7 +261,7 @@ plot(F.cut.uw,ty="b",ylim=c(0,1))
 agelabel<-c("1y","2y","3y","4y","5y","6y","7y","8y","9y","10-14y","15-19y","20-24y",
             "25-29y","30-34y","35-39y","40-44y","45-49y","50-59y","60-69y",">70y")
 
-svg("figs/Belgium/Fig2_be-new.svg",width=8.,height=5.)
+#svg("figs/Belgium/Fig2_be-new.svg",width=8.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(6,6,0,1),cex.lab=1.5,cex.axis=1.5)
 fig1.bar<-barplot(F.cut.uw,col="gray",ylim=c(0,1.1),
                   names.arg="",las=3,axes=F,
@@ -273,14 +273,14 @@ lines(fig1.bar,F.mix)
 points(fig1.bar,F.mix,pch=19)
 polygon(c(fig1.bar,rev(fig1.bar)),c(F.mix.ub,rev(F.mix.lb)),
         col=rgb(0, 0, 0, 0.5), border=NA)
-dev.off()
+#dev.off()
 
 #NO.fp<-read.table("tmp/BelgiumPrevFOIfp.txt",header=T,sep="")
 #NO.lp<-read.table("tmp/BelgiumPrevFOIlp.txt",header=T,sep="")
 #NO.pc<-read.table("tmp/BelgiumPrevFOIpc.txt",header=T,sep="")
 
 agelabel1<-c(paste(seq(0,55,5),"y",sep=""),">60y")
-svg("figs/Fig2b_b19.svg",width=5.,height=5.)
+#svg("figs/Fig2b_b19.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(5,5.5,3,2))
@@ -295,9 +295,9 @@ polygon(c(age1,rev(age1)),c(prev[,3],rev(prev[,1])),
 #points(age1,prop.mix,cex=0.025*n.mix)
 axis(side=1,at=seq(0,60,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1,0.1),seq(0,100,10),las=2)  
-dev.off()
+#dev.off()
 
-svg("figs/Belgium/Fig4_be-new.svg",width=5.,height=5.)
+#svg("figs/Belgium/Fig4_be-new.svg",width=5.,height=5.)
 # Plot force of infection
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
 plot(age1[-(Nage-1):-Nage],foi[-(Nage-1):-Nage,2],main="",lwd=3,
@@ -311,7 +311,7 @@ polygon(c(age1,rev(age1)),c(foi[,3],rev(foi[,1])),
         col=rgb(0, 0, 0, 0.5), border=NA)
 axis(side=1,at=seq(0,60,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),las=2)  
-dev.off()
+#dev.off()
 
 ##### Saving results for further analyses #####
 
@@ -322,12 +322,12 @@ DataMix<-data.frame(status=c("susceptible","immune"),
                     alpha=alpha[,2],lb.alpha=alpha[,1],ub.alpha=alpha[,3],
                     f=c(f[2],NA),lb.f=c(f[3],NA),ub.f=c(f[1],NA),
                     country=rep("be",2))
-write.csv(DataMix,file="results/DataMixtureParams_pb_b19_be.csv",row.names = F)
+#write.csv(DataMix,file="DataMixtureParams_pb_b19_be.csv",row.names = F)
 print(DataMix,digits=2)
-#DataMix<-read.csv("tmp/DataMixtureParams_pb_b19_be.csv",header = T)
+#DataMix<-read.csv("DataMixtureParams_pb_b19_be.csv",header = T)
 
 ### Seroprevalence and FOI
 DataRes<-data.frame(age1,prop.mix,n.mix=as.numeric(n.mix),
                     prev=prev[,2],lb.prev=prev[,1],ub.prev=prev[,3],
                     foi=foi[,2],lb.foi=foi[,1],ub.foi=foi[,3])
-write.csv(DataRes,file="results/DataPrevFOI_pb_b19_be.csv",row.names = F)
+write.csv(DataRes,file="DataPrevFOI_pb_b19_be.csv",row.names = F)
