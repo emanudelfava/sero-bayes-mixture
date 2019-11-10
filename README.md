@@ -4,4 +4,6 @@ Data and codes for replicating the analyses in Section IV (Analysis of Seropreva
 
 This repository contains the following material:
 - Data for the analysis of two data sets from a pre-vaccination period (VZV in England and Wales, parvovirus B19 in Belgium), and one from a post-vaccination period (measles in Tuscany, Italy).
+- Model files for the mixture models, written for JAGS.
+- R codes for estimating the seroprevalence and (only for VZV and parvovirus B19) the force of infection, using Bayesian mixture models for antibody count data.
 
