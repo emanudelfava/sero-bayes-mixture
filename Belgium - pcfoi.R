@@ -12,8 +12,8 @@ library(gplots)
 source("codes/Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-Belgium<-read.csv("data/data_belgium_b19_2002.csv",header=T,sep=";")
-Belgium<-Belgium[is.na(Belgium$parvouml)==F,]
+Dat<-read.csv("data/serodata_vzv_b19_be.csv",header=T,sep=",",na.strings = "")
+Belgium<-Dat[is.na(Dat$parvouml)==F,c(1,2,3,4,5,8,9)]
 head(Belgium) # N=3098 # Those with no missing values for b19 antibodies
 range(Belgium$age)
 # Data collected in 2001-2003.
@@ -56,7 +56,7 @@ Belgium1<-subset(Belgium,age>0 & age<=65) #I removed the equivocal cases and age
 N<-dim(Belgium1)[1] # N=2760
 range(Belgium1$age)
 #Belgium1.dw<-svydesign(ids=~id,data=Belgium1,weights=~dweight) # weighted sample
-Belgium1.uw<-svydesign(ids=~id,data=Belgium1,weights=~1) # unweighted sample
+Belgium1.uw<-svydesign(ids=~yid,data=Belgium1,weights=~1) # unweighted sample
 
 ##### FIT WITH PIECEWISE-CONSTANT FOI MODEL #####
 
@@ -193,7 +193,7 @@ Belgium1$mix.res<-Z
 head(Belgium1)
 
 #Belgium2.dw<-svydesign(ids=~id,data=Belgium1,weights=~dweight) # weighted sample
-Belgium2.uw<-svydesign(ids=~id,data=Belgium1,weights=~1) # unweighted sample
+Belgium2.uw<-svydesign(ids=~yid,data=Belgium1,weights=~1) # unweighted sample
 #prop.table(svytable(~mix.res+sex,subset(Belgium2.dw,age>=20 & age<46)),1)
 prop.table(table(Belgium1[Belgium1$age>=20 & Belgium1$age<46,]$mix.res,
                  Belgium1[Belgium1$age>=20 & Belgium1$age<46,]$gender),1)
@@ -238,7 +238,7 @@ Belgium1$agegrp2<-cut(Belgium1$age,
                      right=F,include.lowest=T)
 #Belgium1<-Belgium1[order(Belgium1$agegrp2),]
 #Belgium2.dw<-svydesign(ids=~id,data=Belgium1,weights=~dweight) # weighted sample
-Belgium2.uw<-svydesign(ids=~id,data=Belgium1,weights=~1) # weighted sample
+Belgium2.uw<-svydesign(ids=~yid,data=Belgium1,weights=~1) # weighted sample
 
 #pos.cut<-svyby(~mres==1,~agegrp2,Belgium2.dw,svytotal)[,3]
 #tot.cut<-svyby(~mres!=2,~agegrp2,Belgium2.dw,svytotal)[,3]
