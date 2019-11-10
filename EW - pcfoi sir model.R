@@ -12,10 +12,10 @@ library(snow)
 library(dclone)
 library(survey)
 library(gplots)
-source("codes/Functions for prevalence and FOI.R")
+source("Functions for prevalence and FOI.R")
 options(max.print=100000)
 
-EnglandWales<-read.table("data/UK_polymod.txt",header=T,sep="\t",
+EnglandWales<-read.table("serodata_vzv_b19_ew.txt",header=T,sep="\t",
                     na.strings = c("",NA))
 EnglandWales<-EnglandWales[is.na(EnglandWales$vzvmiuml)==F,]
 head(EnglandWales) # N=2091 # Those with no missing values for VZV antibodies
@@ -86,16 +86,15 @@ vzv.inits<-function(){
 date()
 #cl<-makeCluster(3,type="SOCK")
 vzv.pcfoi.sn.orig.new<-jags(vzv.data,vzv.inits,vzv.params,n.chains=3,
-                                 model.file="codes/pcfoi_sir_sn_final.txt",n.iter=20000,n.thin = 10)
+                                 model.file="pcfoi_sir_sn_model.txt",n.iter=20000,n.thin = 10)
 #vzv.pcfoi.sn.orig.new.up<-update(vzv.pcfoi.sn.orig.new,n.iter=10000)
 #stopCluster(cl)
 date()
 print(vzv.pcfoi.sn.orig.new,digits=2)
-save(vzv.pcfoi.sn.orig.new,file="results/vzv_pcfoi_sir_sn_new.RData")
-load("results/vzv_pcfoi_sir_sn_new.RData")
+save(vzv.pcfoi.sn.orig.new,file="vzv_pcfoi_sir_sn_res.RData")
+#load("vzv_pcfoi_sir_sn_res.RData")
 recompile(vzv.pcfoi.sn.orig.new)
 dic.samples(vzv.pcfoi.sn.orig.new$model,type="popt",n.iter=1000) 
-# PED = 10,617 MSIR
 # PED = 9,538 SIR
 
 ##### ANALYSIS OF RESULTS OF  JAGS MODEL #####
@@ -260,7 +259,7 @@ age_point<-1:11
 
 agelabel<-c("1y","2y","3y","4y","5y","6y","7y","8y","9y","10-14y","15-20y")
 
-svg("figs/EnglandWales/Fig2_ew-pcfoi.svg",width=8.,height=5.)
+#svg("figs/EnglandWales/Fig2_ew-pcfoi.svg",width=8.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(6,6,0,1),cex.lab=1.5,cex.axis=1.5)
 fig1.bar<-barplot(F.cut.uw,col="gray",ylim=c(0,1.1),
                   names.arg="",las=3,axes=F,
@@ -272,10 +271,10 @@ lines(fig1.bar,F.mix)
 points(fig1.bar,F.mix,pch=19)
 polygon(c(fig1.bar,rev(fig1.bar)),c(F.mix.ub,rev(F.mix.lb)),
         col=rgb(0, 0, 0, 0.5), border=NA)
-dev.off()
+#dev.off()
 
 agelabel1<-seq(0,20,5)
-svg("figs/EnglandWales/Fig3_ew-pcfoi.svg",width=5.,height=5.)
+#svg("figs/EnglandWales/Fig3_ew-pcfoi.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
@@ -290,9 +289,9 @@ polygon(c(age1,rev(age1)),c(ub.prev,rev(lb.prev)),
 points(age1,prop.mix,cex=0.01*n.mix)
 axis(side=1,at=seq(0,20,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),seq(0,100,10),las=2)  
-dev.off()
+#dev.off()
 
-svg("figs/EnglandWales/Fig4_ew-pcfoi.svg",width=5.,height=5.)
+#svg("figs/EnglandWales/Fig4_ew-pcfoi.svg",width=5.,height=5.)
 # Plot force of infection
 par(mgp=c(4,1,0), mar=c(5.5,5.5,0,1),cex.lab=1.5,cex.axis=1.5)
 plot(age1[-(Nage-1):-Nage],foi[-(Nage-1):-Nage],main="",lwd=3,
@@ -306,24 +305,24 @@ polygon(c(age1,rev(age1)),c(ub.foi,rev(lb.foi)),
         col=rgb(0, 0, 0, 0.5), border=NA)
 axis(side=1,at=seq(0,20,5),agelabel1,las=3)
 axis(side=2,at=seq(0,1.,0.1),las=2)  
-dev.off()
+#dev.off()
 
 ##### Comparison between models #####
-load("results/vzv_nonparam_sn_new.RData")
+load("vzv_prodbeta_sn_res.RData")
 dev.np<-vzv.prodbeta.sn.orig.new$BUGSoutput$sims.array[,,"deviance"]
-load("results/vzv_pcfoi_sir_sn_new.RData")
+load("vzv_pcfoi_sir_sn_new.RData")
 dev.pc<-vzv.pcfoi.sn.orig.new$BUGSoutput$sims.array[,,"deviance"]
 
 summaryDiff(dev.np,dev.pc) # the two models fit similarly
 
-svg("figs/diffdev_vzv.svg",width=5.,height=5.)
+#svg("figs/diffdev_vzv.svg",width=5.,height=5.)
 par(mgp=c(3.5,1,0), mar=c(5,5,1.5,1.5),cex.lab=1.5,cex.axis=1.5,las=1)
 plot(ecdf(dev.np),lwd=3,xlab="Posterior deviance",main="",axes=F)
 lines(ecdf(dev.pc),lty=2,col=2,lwd=3)
 legend("right",c("PB","SIR"),lwd=3,col=1:2,lty=1:2,bty="n",cex=1.5)
 axis(side=1,at=seq(-3000,-1500,500))
 axis(side=2,at=seq(0,1.,0.1)) 
-dev.off()
+#dev.off()
 
 ##### Saving results for further analyses #####
 
@@ -335,20 +334,20 @@ DataMix<-data.frame(status=c("susceptible","immune"),
                     f=c(f,NA),lb.f=c(ub.f,NA),ub.f=c(lb.f,NA),
                     country=rep("ew",2))
 print(DataMix,digits=2)
-write.csv(DataMix,file="results/DataMixtureParams_sir_vzv_ew.csv",row.names = F)
+#write.csv(DataMix,file="results/DataMixtureParams_sir_vzv_ew.csv",row.names = F)
 
 ##### Plotting non-parametric and PC-FOI models together #####
 
 n.mix<-as.numeric(n.mix)
 PC<-data.frame(age1,prop.mix,n.mix,prev,lb.prev,ub.prev,foi,lb.foi,ub.foi)
-write.csv(PC,file="results/DataPrevFOI_pcfoi_sir_vzv.csv",row.names=F)
+write.csv(PC,file="DataPrevFOI_pcfoi_sir_vzv.csv",row.names=F)
 
 # Reading data
-BP<-read.csv("results/DataPrevFOI_nonparam_vzv.csv",header=T)
-PC<-read.csv("results/DataPrevFOI_pcfoi_sir_vzv.csv",header=T)
+BP<-read.csv("DataPrevFOI_prodbeta_vzv.csv",header=T)
+PC<-read.csv("DataPrevFOI_pcfoi_sir_vzv.csv",header=T)
 
 agelabel1<-seq(0,20,5)
-svg("figs/Fig2d.svg",width=5.,height=5.)
+#svg("figs/Fig2d.svg",width=5.,height=5.)
 #tiff("figs/Fig3.tif",width=480,height=480,compression = "lzw")
 # Plot prevalence
 par(cex.lab=1.5, cex.main=1.5, cex.sub=1.5,cex.axis=1.5,mgp=c(3.5,1,0),mar=c(4.75,4.75,3,5.))
@@ -392,4 +391,4 @@ axis(side=2,at=seq(0,1,0.1),seq(0,100,10),las=2)
 axis(side=4,at=seq(0,1,0.1),las=2)
 mtext(text="FOI",side=4,cex=1.5,line=3.5,las=3)
 legend("right",lty=1:2,col=1:2,lwd=3,c("PB","SIR"),bty="n",cex = 1.5)
-dev.off()
+#dev.off()
