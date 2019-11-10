@@ -329,4 +329,4 @@ print(DataMix,digits=2)
 ### Seroprevalence and FOI
 DataRes<-data.frame(age1,prop.mix,n.mix=as.numeric(n.mix),
                     prev,lb.prev,ub.prev,foi,lb.foi,ub.foi)
-#write.csv(DataRes,file="DataPrevFOI_nonparam_vzv.csv",row.names = F)
+write.csv(DataRes,file="DataPrevFOI_prodbeta_vzv.csv",row.names = F)
