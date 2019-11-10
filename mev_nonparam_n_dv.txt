@@ -5,7 +5,6 @@ model{
 		m[i]<- xi[S[i]]
 		t[i]<- tau[S[i]]
 		y.rep[i] ~ dnorm(m[i],t[i])
-		#r2[i]<- pow(y.rep[i]-Y[i],2)
 		Z[i]<- ifelse(S[i]>=2,1,0)
 
 # Discrepancy measures between observed and replicated data		
